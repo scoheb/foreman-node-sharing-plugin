@@ -8,6 +8,9 @@ node('docker') {
     /* Make sure our directory is there, if Docker creates it, it gets owned by 'root' */
     sh 'mkdir -p $HOME/.m2'
 
+    def uid = sh(script: 'id -u', returnStdout: true).trim()
+    def gid = sh(script: 'id -g', returnStdout: true).trim()
+
     String containerArgs = '-v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.m2:/var/maven/.m2'
     dir('foreman-container') {
         stage('Build/Test Foreman Container') {
@@ -31,7 +34,7 @@ node('docker') {
 
             docker.image('maven:3.3-jdk-8').inside(containerArgs) {
                 timestamps {
-                    sh 'mvn -B -U -e -Duser.home=/var/maven clean install'
+                    sh 'mvn -B -U -e -Duser.home=/var/maven -Dmaven.test.failure.ignore=true clean install -DskipTests'
 
                     // let foreman-host-configurator build jar
                     sh 'rm -f target/foreman-host-configurator.jar'
@@ -44,6 +47,15 @@ node('docker') {
                     r = sh script: './foreman-host-configurator --help', returnStatus: true
                     if (r != 2) {
                         error('failed to run foreman-host-configurator --help')
+                    }
+
+                    def buildArgs = "--build-arg=uid=${uid} --build-arg=gid=${gid} "
+                        + "foreman-node-sharing-plugin/src/test/resources/ath-container"
+                    docker.build('jenkins/ath', buildArgs)
+                    docker.image('jenkins/ath').inside(containerArgs) {
+                        sh '''
+                        mvn test -Dmaven.test.failure.ignore=true -Duser.home=/var/maven -B
+                        '''
                     }
                 }
             }
@@ -67,12 +79,6 @@ node('docker') {
                     sh 'mvn -B -U -e -Dmaven.test.failure.ignore=true -Duser.home=/var/maven clean install -DskipTests'
                 }
             }
-            def uid = sh(script: 'id -u', returnStdout: true).trim()
-            def gid = sh(script: 'id -g', returnStdout: true).trim()
-
-            def buildArgs = "--build-arg=uid=${uid} --build-arg=gid=${gid} src/test/resources/ath-container"
-            docker.build('jenkins/ath', buildArgs)
-
         }
 
         stage('Test Plugin') {
@@ -80,7 +86,7 @@ node('docker') {
                 sh '''
                 eval $(./vnc.sh 2> /dev/null)
                 mvn test -Dmaven.test.failure.ignore=true -Duser.home=/var/maven -DforkCount=1 -B
-            '''
+                '''
             }
         }
 
