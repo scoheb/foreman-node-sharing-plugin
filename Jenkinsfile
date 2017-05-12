@@ -20,8 +20,8 @@ node('docker') {
             }
             stage('Archive') {
                 junit 'target/surefire-reports/**/*.xml'
-                archiveArtifacts artifacts: 'target/**/jms-messaging.hpi', fingerprint: true
-                archiveArtifacts artifacts: 'target/diagnostics/**'
+                archive artifacts: 'target/**/jms-messaging.hpi', fingerprint: true
+                archive artifacts: 'target/diagnostics/**'
             }
         }
     }
@@ -57,8 +57,8 @@ node('docker') {
 
         stage('Archive Plugin') {
             junit 'target/surefire-reports/**/*.xml'
-            archiveArtifacts artifacts: 'target/**/foreman-*.hpi', fingerprint: true
-            archiveArtifacts artifacts: 'target/diagnostics/**'
+            archive artifacts: 'target/**/foreman-*.hpi', fingerprint: true
+            archive artifacts: 'target/diagnostics/**'
         }
     }
 
