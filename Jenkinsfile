@@ -13,9 +13,17 @@ node('docker') {
         stage('Build/Test Foreman Container') {
             def buildArgs = "."
             docker.build('jenkins/foreman', buildArgs)
+            docker.image('jenkins/foreman').inside(containerArgs) {
+                timeout(240) {
+                    waitUntil {
+                        def r = sh script: 'wget -q http://localhost:3000 -O /dev/null', returnStatus: true
+                        return (r == 0);
+                    }
+                }
+            }
         }
     }
-    
+
     dir('foreman-host-configurator') {
         stage('Build/Test Host Configurator') {
             /* Performing some clever trickery to map our ~/.m2 into the container */
