@@ -15,7 +15,7 @@ node('docker') {
             docker.build('jenkins/foreman', buildArgs)
             String foremanContainerArgs = '-p 3000:3000'
             docker.image('jenkins/foreman').withRun(foremanContainerArgs) {
-                timeout(240) {
+                timeout(5) {
                     waitUntil {
                         def r = sh script: 'wget -q http://localhost:3000 -O /dev/null', returnStatus: true
                         return (r == 0);
@@ -32,12 +32,25 @@ node('docker') {
             docker.image('maven:3.3-jdk-8').inside(containerArgs) {
                 timestamps {
                     sh 'mvn -B -U -e -Duser.home=/var/maven clean install'
+
+                    // let foreman-host-configurator build jar
+                    sh 'rm -f target/foreman-host-configurator.jar'
+                    def r = sh script: 'foreman-host-configurator --help', returnStatus: true
+                    if (r != 2) {
+                        error('failed to run foreman-host-configurator --help')
+                    }
+                    // now let it use artifact
+                    sh 'mv target/foreman-host-configurator.jar foreman-host-configurator.jar'
+                    r = sh script: 'foreman-host-configurator --help', returnStatus: true
+                    if (r != 2) {
+                        error('failed to run foreman-host-configurator --help')
+                    }
                 }
             }
             stage('Archive Host Configurator') {
                 junit 'target/surefire-reports/**/*.xml'
-                archive 'target/**/jms-messaging.hpi'
-                archive 'target/diagnostics/**'
+                archive 'foreman-host-configurator'
+                archive 'foreman-host-configurator.jar'
             }
         }
     }
