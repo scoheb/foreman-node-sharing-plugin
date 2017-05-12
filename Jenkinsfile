@@ -49,8 +49,7 @@ node('docker') {
                         error('failed to run foreman-host-configurator --help')
                     }
 
-                    def buildArgs = "--build-arg=uid=${uid} --build-arg=gid=${gid} "
-                        + "foreman-node-sharing-plugin/src/test/resources/ath-container"
+                    def buildArgs = "--build-arg=uid=${uid} --build-arg=gid=${gid} foreman-node-sharing-plugin/src/test/resources/ath-container"
                     docker.build('jenkins/ath', buildArgs)
                     docker.image('jenkins/ath').inside(containerArgs) {
                         sh '''
