@@ -9,6 +9,13 @@ node('docker') {
     sh 'mkdir -p $HOME/.m2'
 
     String containerArgs = '-v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.m2:/var/maven/.m2'
+    dir('foreman-container') {
+        stage('Build/Test Foreman Container') {
+            def buildArgs = "."
+            docker.build('jenkins/foreman', buildArgs)
+        }
+    }
+    
     dir('foreman-host-configurator') {
         stage('Build/Test Host Configurator') {
             /* Performing some clever trickery to map our ~/.m2 into the container */
@@ -18,7 +25,7 @@ node('docker') {
                     sh 'mvn -B -U -e -Duser.home=/var/maven clean install'
                 }
             }
-            stage('Archive') {
+            stage('Archive Host Configurator') {
                 junit 'target/surefire-reports/**/*.xml'
                 archive 'target/**/jms-messaging.hpi'
                 archive 'target/diagnostics/**'
