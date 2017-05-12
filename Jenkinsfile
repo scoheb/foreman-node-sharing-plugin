@@ -48,21 +48,21 @@ node('docker') {
                     if (r != 2) {
                         error('failed to run foreman-host-configurator --help')
                     }
-
-                    def buildArgs = "--build-arg=uid=${uid} --build-arg=gid=${gid} foreman-node-sharing-plugin/src/test/resources/ath-container"
-                    docker.build('jenkins/ath', buildArgs)
-                    docker.image('jenkins/ath').inside(containerArgs) {
-                        sh '''
-                        mvn test -Dmaven.test.failure.ignore=true -Duser.home=/var/maven -B
-                        '''
-                    }
                 }
             }
-            stage('Archive Host Configurator') {
-                junit 'target/surefire-reports/**/*.xml'
-                archive 'foreman-host-configurator'
-                archive 'foreman-host-configurator.jar'
+            def buildArgs = "--build-arg=uid=${uid} --build-arg=gid=${gid} foreman-node-sharing-plugin/src/test/resources/ath-container"
+            docker.build('jenkins/ath', buildArgs)
+            docker.image('jenkins/ath').inside(containerArgs) {
+                sh '''
+                mvn test -Dmaven.test.failure.ignore=true -Duser.home=/var/maven -B
+                '''
             }
+
+        }
+        stage('Archive Host Configurator') {
+            junit 'target/surefire-reports/**/*.xml'
+            archive 'foreman-host-configurator'
+            archive 'foreman-host-configurator.jar'
         }
     }
 
