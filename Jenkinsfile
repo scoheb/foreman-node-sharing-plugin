@@ -13,7 +13,8 @@ node('docker') {
         stage('Build/Test Foreman Container') {
             def buildArgs = "."
             docker.build('jenkins/foreman', buildArgs)
-            docker.image('jenkins/foreman').inside(containerArgs) {
+            String foremanContainerArgs = '-p 3000:3000'
+            docker.image('jenkins/foreman').withRun(foremanContainerArgs) {
                 timeout(240) {
                     waitUntil {
                         def r = sh script: 'wget -q http://localhost:3000 -O /dev/null', returnStatus: true
