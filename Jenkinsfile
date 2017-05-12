@@ -35,7 +35,7 @@ node('docker') {
 
                     // let foreman-host-configurator build jar
                     sh 'rm -f target/foreman-host-configurator.jar'
-                    def r = sh script: 'f./oreman-host-configurator --help', returnStatus: true
+                    def r = sh script: './foreman-host-configurator --help', returnStatus: true
                     if (r != 2) {
                         error('failed to run foreman-host-configurator --help')
                     }
