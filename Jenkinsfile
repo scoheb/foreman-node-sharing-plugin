@@ -58,10 +58,12 @@ node('docker') {
             '''
         }
 
-        stage('Archive Host Configurator') {
-            junit 'target/surefire-reports/**/*.xml'
-            archive 'foreman-host-configurator'
-            archive 'foreman-host-configurator.jar'
+        dir('foreman-host-configurator') {
+            stage('Archive Host Configurator') {
+                junit 'target/surefire-reports/**/*.xml'
+                archive 'foreman-host-configurator'
+                archive 'foreman-host-configurator.jar'
+            }
         }
     }
 
