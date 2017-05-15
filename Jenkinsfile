@@ -54,7 +54,7 @@ node('docker') {
             docker.build('jenkins/ath', buildArgs)
             docker.image('jenkins/ath').inside(containerArgs) {
                 sh '''
-                mvn test -Dmaven.test.failure.ignore=true -Duser.home=/var/maven -B
+                mvn clean test -Dmaven.test.failure.ignore=true -Duser.home=/var/maven -B
                 '''
             }
 
