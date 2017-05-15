@@ -33,22 +33,20 @@ node('docker') {
         /* Performing some clever trickery to map our ~/.m2 into the container */
 
         docker.image('maven:3.3-jdk-8').inside(containerArgs) {
-            dir('foreman-host-configurator') {
-                timestamps {
-                    sh 'cd foreman-host-configurator ; mvn -B -U -e -Duser.home=/var/maven -Dmaven.test.failure.ignore=true clean install -DskipTests'
+            timestamps {
+                sh 'cd foreman-host-configurator ; mvn -B -U -e -Duser.home=/var/maven -Dmaven.test.failure.ignore=true clean install -DskipTests'
 
-                    // let foreman-host-configurator build jar
-                    sh 'cd foreman-host-configurator ; cd rm -f target/foreman-host-configurator.jar'
-                    def r = sh script: 'cd foreman-host-configurator ; ./foreman-host-configurator --help', returnStatus: true
-                    if (r != 2) {
-                        error('failed to run foreman-host-configurator --help')
-                    }
-                    // now let it use artifact
-                    sh 'cd foreman-host-configurator ; mv target/foreman-host-configurator.jar foreman-host-configurator.jar'
-                    r = sh script: 'cd foreman-host-configurator ; ./foreman-host-configurator --help', returnStatus: true
-                    if (r != 2) {
-                        error('failed to run foreman-host-configurator --help')
-                    }
+                // let foreman-host-configurator build jar
+                sh 'cd foreman-host-configurator ; rm -f target/foreman-host-configurator.jar'
+                def r = sh script: 'cd foreman-host-configurator ; ./foreman-host-configurator --help', returnStatus: true
+                if (r != 2) {
+                    error('failed to run foreman-host-configurator --help')
+                }
+                // now let it use artifact
+                sh 'cd foreman-host-configurator ; mv target/foreman-host-configurator.jar foreman-host-configurator.jar'
+                r = sh script: 'cd foreman-host-configurator ; ./foreman-host-configurator --help', returnStatus: true
+                if (r != 2) {
+                    error('failed to run foreman-host-configurator --help')
                 }
             }
         }
