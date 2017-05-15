@@ -35,17 +35,17 @@ node('docker') {
         docker.image('maven:3.3-jdk-8').inside(containerArgs) {
             dir('foreman-host-configurator') {
                 timestamps {
-                    sh 'mvn -B -U -e -Duser.home=/var/maven -Dmaven.test.failure.ignore=true clean install -DskipTests'
+                    sh 'cd foreman-host-configurator ; mvn -B -U -e -Duser.home=/var/maven -Dmaven.test.failure.ignore=true clean install -DskipTests'
 
                     // let foreman-host-configurator build jar
-                    sh 'cd rm -f target/foreman-host-configurator.jar'
-                    def r = sh script: './foreman-host-configurator --help', returnStatus: true
+                    sh 'cd foreman-host-configurator ; cd rm -f target/foreman-host-configurator.jar'
+                    def r = sh script: 'cd foreman-host-configurator ; ./foreman-host-configurator --help', returnStatus: true
                     if (r != 2) {
                         error('failed to run foreman-host-configurator --help')
                     }
                     // now let it use artifact
-                    sh 'mv target/foreman-host-configurator.jar foreman-host-configurator.jar'
-                    r = sh script: './foreman-host-configurator --help', returnStatus: true
+                    sh 'cd foreman-host-configurator ; mv target/foreman-host-configurator.jar foreman-host-configurator.jar'
+                    r = sh script: 'cd foreman-host-configurator ; ./foreman-host-configurator --help', returnStatus: true
                     if (r != 2) {
                         error('failed to run foreman-host-configurator --help')
                     }
@@ -55,11 +55,9 @@ node('docker') {
         def buildArgs = "--build-arg=uid=${uid} --build-arg=gid=${gid} ../foreman-node-sharing-plugin/src/test/resources/ath-container"
         docker.build('jenkins/ath', buildArgs)
         docker.image('jenkins/ath').inside(containerArgs) {
-            dir('foreman-host-configurator') {
-                sh '''
-                mvn clean test -Dmaven.test.failure.ignore=true -Duser.home=/var/maven -B
-                '''
-            }
+            sh '''
+            cd foreman-host-configurator ; mvn clean test -Dmaven.test.failure.ignore=true -Duser.home=/var/maven -B
+            '''
         }
 
         stage('Archive Host Configurator') {
